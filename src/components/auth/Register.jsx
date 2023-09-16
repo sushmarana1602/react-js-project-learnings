@@ -1,115 +1,206 @@
-import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
 import * as requestAssets from "../../utils/request";
-import './AuthPage.css'
-const Register = () => {
-    const [errorsList, setErrorsList] = useState(null);
-    const [successMsg, setSuccessMsg] = useState(null);
-    const inputEmailRef = useRef(null);
-    const inputPasswordRef = useRef(null);
-    const inputFirstNameRef = useRef(null);
-    const inputLastNameRef = useRef(null);
-    const inputConfirmPasswordRef = useRef(null);
-    const inputTermsRef = useRef(null);
-    
-    useEffect(() => {
-       console.log({errorsList});
-    }, [errorsList])
-    function submitHandler (event)
-    {
-        event.preventDefault();
-        const inputFieldsObj = {
-            email : inputEmailRef.current.value,
-            password: inputPasswordRef.current.value,
-            first_name: inputFirstNameRef.current.value,
-            last_name: inputLastNameRef.current.value,
-            password_confirmation: inputConfirmPasswordRef.current.value,
-            terms: 'yes'
-        }
-        requestAssets.api('auth/register', inputFieldsObj).then((res) => {
-           if (res.status == 422) {
-            console.log(res.data.errors);
-            setErrorsList(res.data.errors);
-           }
-          if (res.status == 400) {
-            console.log("ress", res);
-            let resError = {
-                message : res.data.message
-            };
-            setErrorsList(resError);
-            console.log(errorsList);
-          }
-          if (res.status == 200) {
-            setErrorsList(null);
-            inputEmailRef.current.value = null;
-            inputPasswordRef.current.value = null;
-            inputConfirmPasswordRef.current.value = null;
-            inputTermsRef.current.value = null;
-            inputFirstNameRef.current.value = null;
-            inputLastNameRef.current.value = null;
-            setSuccessMsg(res.data.message);
-          }
-        });
-        
-    }
-    return (
-        <div className='authpage'>
-            <div className='authcont'>
-                <form className='authform' onSubmit={submitHandler}>
-                    <h1>Register</h1>
-                   {
-                    errorsList && errorsList.message && <span className="error">{errorsList.message}</span>
-                   }
-                    {
-                    successMsg && <span className="success">{successMsg}</span>
-                   }
-                    <div className='formgroup'>
-                        <label htmlFor='first_name'>First Name</label>
-                        <input type='text' id='first_name' name="first_name" ref={inputFirstNameRef} />
-                        {
-                            errorsList && errorsList.first_name && <span className="error">{errorsList.first_name[0]}</span>
-                        }
-                        
-                    </div>
-                    <div className='formgroup'>
-                        <label htmlFor='last_name'>Last Name</label>
-                        <input type='text' id='last_name' name="last_name" ref={inputLastNameRef} />
-                        {
-                            errorsList && errorsList.last_name && <span className="error">{errorsList.last_name[0]}</span>
-                        }
-                        
-                    </div>
-                    <div className='formgroup'>
-                        <label htmlFor='email'>Email</label>
-                        <input type='email' id='email' name="email" ref={inputEmailRef} />
-                        {
-                            errorsList && errorsList.email && <span className="error">{errorsList.email[0]}</span>
-                        }
-                        
-                    </div>
+import Avatar from '@mui/material/Avatar';
+import Button from '@mui/material/Button';
+import LoadingButton from '@mui/lab/LoadingButton';
+import CssBaseline from '@mui/material/CssBaseline';
+import TextField from '@mui/material/TextField';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
+import Link from '@mui/material/Link';
+import Grid from '@mui/material/Grid';
+import Box from '@mui/material/Box';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import Typography from '@mui/material/Typography';
+import Container from '@mui/material/Container';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+import Alert from '@mui/material/Alert';
+import FormControl from '@mui/material/FormControl';
+import FormHelperText from '@mui/material/FormHelperText';
 
-                    <div className='formgroup'>
-                        <label htmlFor='password'>Password</label>
-                        <input type='password' id='password' name="password" ref={inputPasswordRef}/>
-                        {
-                            errorsList && errorsList.password && <span className="error">{errorsList.password[0]}</span>
-                        }
-                    </div>
-                    <div className='formgroup'>
-                        <label htmlFor='confrm_password'>Password</label>
-                        <input type='password' id='password' name="confirm_password" ref={inputConfirmPasswordRef}/>
-                    </div>
-                    <div className='formgroup'>
-                        <input type='checkbox' name="terms" ref={inputTermsRef}/> I agree with terms & conditions 
-                        {
-                            errorsList && errorsList.terms && <span className="error">{errorsList.terms[0]}</span>
-                        }
-                    </div>
-                    <button type="submit">Register</button>
-                </form>
-            </div>
-        </div>
-    )
+function Copyright(props) {
+  return (
+    <Typography variant="body2" color="text.secondary" align="center" {...props}>
+      {'Copyright © '}
+      <Link color="inherit" href="https://mui.com/">
+        Your Website
+      </Link>{' '}
+      {new Date().getFullYear()}
+      {'.'}
+    </Typography>
+  );
 }
 
-export default Register
+// TODO remove, this demo shouldn't need to reset the theme.
+
+const defaultTheme = createTheme();
+
+export default function SignUp() {
+  const [errorsList, setErrorsList] = useState(null);
+  const [successMsg, setSuccessMsg] = useState(null);
+  const [processForm, setProcessForm] = useState(false);
+  const [showError, setShowError] = useState(false);
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    setProcessForm(true);
+    const data = new FormData(event.currentTarget);
+    const inputFieldsObj = {
+      email: data.get('email'),
+      password: data.get('password'),
+      password_confirmation: data.get('confirmPassword'),
+      first_name: data.get('firstName'),
+      last_name: data.get('lastName'),
+      terms: data.get('terms')
+    };
+    requestAssets.api('auth/register', inputFieldsObj).then((res) => {
+      setProcessForm(false);
+     if (res.status == 422) {
+      setShowError(true);
+      setErrorsList(res.data.errors);
+     }
+    if (res.status == 400) {
+      let resError = {
+          message : res.data.message
+      };
+      setShowError(true);
+      setErrorsList(resError);
+    }
+    if (res.status == 200) {
+      setErrorsList(null);
+      setShowError(false);
+      setSuccessMsg(res.data.message);
+      event.target.reset();
+    }
+  });
+  };
+
+  return (
+    <ThemeProvider theme={defaultTheme}>
+      <Container component="main" maxWidth="xs">
+        <CssBaseline />
+        <Box
+          sx={{
+            marginTop: 8,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+        >
+          <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
+            <LockOutlinedIcon />
+          </Avatar>
+          <Typography component="h1" variant="h5">
+            Sign up
+          </Typography>
+          {
+            errorsList && errorsList.message && <Alert severity="error">{errorsList.message}</Alert>
+          }
+          
+          {
+            successMsg && <Alert severity="success">{successMsg}</Alert>
+          }
+          
+          <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 3 }}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  autoComplete="given-name"
+                  name="firstName"
+                  required
+                  fullWidth
+                  id="firstName"
+                  label="First Name"
+                  error={showError}
+                  helperText={showError && errorsList.first_name && errorsList.first_name[0]}
+                  autoFocus
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  required
+                  fullWidth
+                  id="lastName"
+                  label="Last Name"
+                  name="lastName"
+                  error={showError}
+                  helperText={showError && errorsList.last_name && errorsList.last_name[0]}
+                  autoComplete="family-name"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  required
+                  fullWidth
+                  id="email"
+                  label="Email Address"
+                  name="email"
+                  error={showError}
+                  helperText={showError && errorsList.email && errorsList.email[0]}
+                  autoComplete="email"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  required
+                  fullWidth
+                  name="password"
+                  label="Password"
+                  type="password"
+                  id="password"
+                  error={showError}
+                  helperText={showError && errorsList.password && errorsList.password[0]}
+                  autoComplete="new-password"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  required
+                  fullWidth
+                  name="confirmPassword"
+                  label="Confirm Password"
+                  type="password"
+                  id="confirmPassword"
+                  autoComplete="new-password"
+                />
+              </Grid>
+              <Grid item xs={12}>
+              <FormControl
+              required
+              error={showError}
+              component="fieldset"
+              sx={{ m: 3 }}
+              variant="standard"
+            >
+                <FormControlLabel
+                  
+                  control={<Checkbox value="yes" color="primary" name="terms" />}
+                  label="I agree with terms & conditions."
+                />
+                { showError && errorsList.terms && <FormHelperText>{ errorsList.terms[0] }</FormHelperText> }
+                </FormControl>
+              </Grid>
+            </Grid>
+            <LoadingButton
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 2 }}
+              loading={processForm}
+            >
+              Sign Up
+            </LoadingButton>
+            <Grid container justifyContent="flex-end">
+              <Grid item>
+                <Link href="/login" variant="body2">
+                  Already have an account? Sign in
+                </Link>
+              </Grid>
+            </Grid>
+          </Box>
+        </Box>
+        <Copyright sx={{ mt: 5 }} />
+      </Container>
+    </ThemeProvider>
+  );
+}

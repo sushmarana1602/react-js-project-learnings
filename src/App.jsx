@@ -1,10 +1,10 @@
-import Login from './components/auth/Login'
+import SignIn from './components/auth/Login'
 import './App.css'
 
 function App() {
   return (
     <>
-        <Login></Login>
+        <SignIn></SignIn>
     </>
   )
 }
