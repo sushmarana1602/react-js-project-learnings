@@ -48,7 +48,7 @@ export default function SignIn() {
       email: data.get('email'),
       password: data.get('password'),
     };
-    requestAssets.api('auth/login', inputFieldsObj).then((res) => {
+    requestAssets.api('auth/login', inputFieldsObj, 'post').then((res) => {
       setProcessForm(false);
       if (res) {
         if (res.status == 422) {
@@ -67,6 +67,11 @@ export default function SignIn() {
         if (res.status == 200) {
           setShowError(false);
           setErrorsList(null);
+          localStorage.setItem('token', res.data.token);
+          if (res.data.organizations.length === 1) {
+            localStorage.setItem('organization', JSON.stringify(res.data.organizations[0]));
+           
+          }
           navigate('/dashboard');
         }
       } else {

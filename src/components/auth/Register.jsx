@@ -53,7 +53,7 @@ export default function SignUp() {
       last_name: data.get('lastName'),
       terms: data.get('terms')
     };
-    requestAssets.api('auth/register', inputFieldsObj).then((res) => {
+    requestAssets.api('auth/register', inputFieldsObj, 'post').then((res) => {
       setProcessForm(false);
      if (res.status == 422) {
       setShowError(true);

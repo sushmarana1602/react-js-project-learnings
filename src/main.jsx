@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import Register from "./components/auth/Register.jsx";
 import SignIn from "./components/auth/Login.jsx";
+import CreateWidget from './components/dashoard/CreateWidget.jsx'
+import Test from './components/dashoard/Test.jsx'
 import './index.css';
 import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
@@ -31,6 +33,10 @@ const router = createBrowserRouter([
   {
     path: "login",
     element: <SignIn/>
+  },
+  {
+    path: "dashboard",
+    element: <CreateWidget/>
   }
 ]);
 /*ReactDOM.createRoot(document.getElementById('root')).render(
