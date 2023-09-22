@@ -25,9 +25,14 @@ import Card from '@mui/material/Card';
 import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 import { ChartConfigs } from '../../utils/device-types-config';
-import { KeyOffOutlined } from '@mui/icons-material';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
+import MenuItem from '@mui/material/MenuItem';
+import Checkbox  from '@mui/material/Checkbox';
+import Select  from '@mui/material/Select';
+import InputLabel from '@mui/material/InputLabel';
+import OutlinedInput from '@mui/material/OutlinedInput';
+import FormControl from '@mui/material/FormControl';
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -57,18 +62,36 @@ export default function FullScreenDialog() {
   const [activeStep, setActiveStep] = useState(0);
   const [deviceTypes, setDeviceTypes] = useState([]);
   const[userDeviceTypeGroups, setUserDeviceTypeGroups] = useState(null);
-  const [formData, setFormData] =  useState(null);
+  const[devices, setDevices] = useState([]);
+  const [selectedDevices, setSelectedDevices] = useState([]);
+
+  const formDataObj = {
+    chartType : '',
+    deviceTypeId:null,
+    deviceId: [],
+    widgetSize: '',
+    selectedSensorAttribute: '',
+  }
+  const [formData, setFormData] =  useState(formDataObj);
   useEffect(() => {
     // call api or anything
-  if (deviceTypes === null) {
-  console.log(deviceTypes);
+  if (deviceTypes.length == 0) {
    requestAssets.api('user-device-type-groups').then((res) => {
     setUserDeviceTypeGroups(res.data);
     });
   } 
-    console.log(deviceTypes);
   
  }, [deviceTypes]);
+ const handleChange = (event) => {
+  const {
+    target: { value },
+  } = event;
+  console.log(value);
+  setSelectedDevices(
+    // On autofill we get a stringified value.
+    typeof value === 'string' ? value.split(',') : value,
+  );
+};
  const getChart = (chartType) => {
   return ChartConfigs[chartType];
  }
@@ -89,10 +112,9 @@ const handleBack = () => {
   };
 
   const selectChart = (chartType) => {
-    const data = formData ? formData : {};
+    const data = formData;
     data['chartType'] = chartType;
     setFormData(data);
-    console.log({formData});
     let deviceTypesList = [];
     const supported =getChart(formData.chartType).supportedDeviceTypes;
     
@@ -107,7 +129,15 @@ const handleBack = () => {
   setDeviceTypes(deviceTypesList);
   handleNext();
   }
-  const getDevices = () => {
+
+  const getDevices = (id) => {
+    const data = formData;
+    data['deviceTypeId'] = id;
+    setFormData(data);
+    
+    requestAssets.api(`devices?version=lite&itemsPerPage=10000&deviceTypeGroup=${id}`).then((res) => {
+      setDevices(res.data.data);
+    });
 
   }
   const getStepContent = (step) => {
@@ -133,12 +163,13 @@ const handleBack = () => {
           </Container>
         );
         case 1: 
+        if (formData){
             return (
               <>
               <TextField
                 required
                 id="outlined-required"
-                label="Required"
+                label="Chart Type"
                 value={formData.chartType}
                 sx={{ m: 1, width: '50ch' }}
               />
@@ -147,11 +178,47 @@ const handleBack = () => {
                   id="combo-box-demo"
                   options={deviceTypes}
                   sx={{ m: 1, width: '50ch' }}
-                  renderInput={(params) => <TextField {...params} label="Select" />}
-                  onChange={getDevices()}
+                  renderInput={(params) => <TextField {...params} label="Select Device Type" />}
+                  renderOption={(props, option) => {
+                    return (
+                        <li {...props}>
+                          {option.label}
+                        </li>
+                       )
+                     }}
+                  onChange={(_event, value) => {
+                    getDevices(value.id)
+                }}
                 />
+                 
+                <FormControl sx={{ m: 1, width: 300 }}>
+                <InputLabel id="demo-multiple-checkbox-label">Select Device(s)</InputLabel>
+                <Select
+                  labelId="demo-multiple-checkbox-label"
+                  id="demo-multiple-checkbox"
+                  multiple
+                  value={selectedDevices}
+                  onChange={handleChange}
+                  input={<OutlinedInput label="Devices" />}
+                  renderValue={(selected) => selected.join(', ')}
+                  sx={{ width: '48ch' }}
+                >
+                  <MenuItem disabled value="">
+                    <em>Please Select</em>
+                  </MenuItem>
+                  {devices?.map((device) => (
+                    <MenuItem key={device.id} value={device.id}>
+                      <Checkbox checked={selectedDevices.indexOf(device.id) > -1} />
+                      <ListItemText primary={device.device_name} />
+                    </MenuItem>
+                  ))}
+                </Select>
+        </FormControl>
+
                 </>
             );
+          }
+          return null;
         case 2: 
         return (
           <p>This is complete</p>

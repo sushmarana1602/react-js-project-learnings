@@ -6,7 +6,6 @@ function App() {
   return (
     <>
         <SignIn></SignIn>
-        <CreateWidget></CreateWidget>
     </>
   )
 }
